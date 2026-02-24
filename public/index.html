@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🔊 Faah Error Sound</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #0d0d0f;
+      --surface: #16161a;
+      --border: #2a2a30;
+      --accent: #ff4444;
+      --accent-glow: rgba(255, 68, 68, 0.35);
+      --green: #22c55e;
+      --yellow: #facc15;
+      --text: #f0f0f3;
+      --muted: #6b6b7a;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+      padding: 2rem;
+    }
+
+    /* ── Title ── */
+    h1 {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 900;
+      letter-spacing: -1px;
+      text-align: center;
+    }
+    h1 span { color: var(--accent); }
+
+    /* ── Status badge ── */
+    #status-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 0.45rem 1.1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+    #status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--muted);
+      transition: background 0.3s;
+    }
+    #status-bar.connected #status-dot { background: var(--green); box-shadow: 0 0 8px var(--green); }
+    #status-bar.disconnected #status-dot { background: var(--accent); }
+
+    /* ── Main card ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2.5rem;
+      width: 100%;
+      max-width: 460px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.8rem;
+    }
+
+    /* ── Alert banner ── */
+    #alert {
+      width: 100%;
+      border-radius: 14px;
+      padding: 1.2rem 1.4rem;
+      text-align: center;
+      font-weight: 700;
+      font-size: 1.4rem;
+      letter-spacing: 0.5px;
+      background: transparent;
+      border: 2px solid var(--border);
+      color: var(--muted);
+      transition: all 0.25s ease;
+      user-select: none;
+    }
+    #alert.playing {
+      background: var(--accent-glow);
+      border-color: var(--accent);
+      color: var(--accent);
+      animation: pulse 0.6s ease-in-out infinite alternate;
+    }
+    @keyframes pulse {
+      from { box-shadow: 0 0 10px var(--accent-glow); }
+      to   { box-shadow: 0 0 30px var(--accent-glow), 0 0 60px var(--accent-glow); }
+    }
+
+    /* ── Waveform bars ── */
+    #waveform {
+      display: flex;
+      align-items: flex-end;
+      gap: 5px;
+      height: 40px;
+    }
+    .bar {
+      width: 6px;
+      border-radius: 3px;
+      background: var(--border);
+      height: 8px;
+      transition: background 0.2s;
+    }
+    #alert.playing ~ #waveform .bar,
+    .waveform-active .bar {
+      background: var(--accent);
+      animation: wave 0.6s ease-in-out infinite alternate;
+    }
+    .bar:nth-child(1) { animation-delay: 0.0s; }
+    .bar:nth-child(2) { animation-delay: 0.1s; }
+    .bar:nth-child(3) { animation-delay: 0.2s; }
+    .bar:nth-child(4) { animation-delay: 0.15s; }
+    .bar:nth-child(5) { animation-delay: 0.05s; }
+    .bar:nth-child(6) { animation-delay: 0.25s; }
+    .bar:nth-child(7) { animation-delay: 0.1s; }
+    @keyframes wave {
+      from { height: 6px; }
+      to   { height: 36px; }
+    }
+
+    /* ── Test button ── */
+    #test-btn {
+      width: 100%;
+      padding: 0.85rem 1.5rem;
+      border-radius: 12px;
+      border: none;
+      background: var(--accent);
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.2s, opacity 0.2s;
+      box-shadow: 0 4px 20px var(--accent-glow);
+    }
+    #test-btn:hover  { transform: translateY(-2px); box-shadow: 0 6px 28px var(--accent-glow); }
+    #test-btn:active { transform: translateY(0); opacity: 0.85; }
+
+    /* ── Event log ── */
+    #log-wrap { width: 100%; }
+    #log-label { font-size: 0.75rem; font-weight: 600; color: var(--muted); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 1px; }
+    #log {
+      background: #0a0a0c;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.75rem 1rem;
+      font-size: 0.78rem;
+      font-family: 'Courier New', monospace;
+      color: var(--muted);
+      height: 120px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    #log .entry { line-height: 1.5; }
+    #log .entry.sound { color: var(--accent); font-weight: 600; }
+    #log .entry.info  { color: var(--green); }
+
+    /* ── Endpoint hint ── */
+    .hint {
+      font-size: 0.78rem;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.6;
+    }
+    .hint code {
+      background: #0a0a0c;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 1px 6px;
+      color: var(--yellow);
+      font-family: 'Courier New', monospace;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Faah <span>Error</span> Sound 🔊</h1>
+
+  <div id="status-bar">
+    <div id="status-dot"></div>
+    <span id="status-text">Connecting…</span>
+  </div>
+
+  <div class="card">
+
+    <div id="alert">😴 Waiting for errors…</div>
+
+    <div id="waveform">
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+    </div>
+
+    <button id="test-btn">🔊 Test Sound</button>
+
+    <div id="log-wrap">
+      <div id="log-label">Event Log</div>
+      <div id="log"></div>
+    </div>
+
+    <p class="hint">
+      Trigger from n8n or any HTTP client:<br>
+      <code>GET /play-sound</code> or <code>GET /error-sound</code><br>
+      Optional: <code>?workflow=MyWorkflowName</code>
+    </p>
+
+  </div>
+
+  <!-- Preload the sound -->
+  <audio id="error-sound" preload="auto">
+    <source src="/fahhh_KcgAXfs.mp3" type="audio/mpeg" />
+  </audio>
+
+  <script>
+    const audio      = document.getElementById('error-sound');
+    const alert      = document.getElementById('alert');
+    const waveform   = document.getElementById('waveform');
+    const statusBar  = document.getElementById('status-bar');
+    const statusText = document.getElementById('status-text');
+    const log        = document.getElementById('log');
+    const testBtn    = document.getElementById('test-btn');
+
+    // ── Logging ──────────────────────────────────────────────────────────────
+    function addLog(msg, type = 'info') {
+      const now  = new Date().toLocaleTimeString();
+      const el   = document.createElement('div');
+      el.className = `entry ${type}`;
+      el.textContent = `[${now}] ${msg}`;
+      log.appendChild(el);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    // ── Play sound + show animation ───────────────────────────────────────────
+    function playErrorSound(workflow = null) {
+      audio.currentTime = 0;
+      audio.play().catch(err => {
+        addLog(`⚠️  Audio blocked: ${err.message}. Click the page once to unlock.`, 'sound');
+      });
+
+      const label = workflow ? `🔊 ERROR! — "${workflow}"` : '🔊 ERROR SOUND!';
+      alert.textContent = label;
+      alert.classList.add('playing');
+      waveform.classList.add('waveform-active');
+      addLog(workflow ? `Sound triggered by workflow: ${workflow}` : 'Sound triggered!', 'sound');
+
+      audio.onended = () => {
+        alert.textContent = '😴 Waiting for errors…';
+        alert.classList.remove('playing');
+        waveform.classList.remove('waveform-active');
+      };
+    }
+
+    // ── SSE connection ────────────────────────────────────────────────────────
+    function connect() {
+      const evtSource = new EventSource('/events');
+
+      evtSource.addEventListener('connected', () => {
+        statusBar.className  = 'connected';
+        statusText.textContent = 'Connected';
+        addLog('Connected to server.', 'info');
+      });
+
+      evtSource.addEventListener('play-sound', (e) => {
+        const data = JSON.parse(e.data);
+        playErrorSound(data.workflow);
+      });
+
+      evtSource.onerror = () => {
+        statusBar.className  = 'disconnected';
+        statusText.textContent = 'Disconnected — retrying…';
+        addLog('Lost connection. Browser will retry automatically.', 'info');
+      };
+    }
+
+    connect();
+
+    // ── Test button ───────────────────────────────────────────────────────────
+    testBtn.addEventListener('click', () => {
+      fetch('/play-sound')
+        .then(r => r.json())
+        .then(d => addLog(`Test fired. Clients notified: ${d.clientsNotified}`, 'info'))
+        .catch(() => playErrorSound()); // fallback: play locally
+    });
+  </script>
+</body>
+</html>
